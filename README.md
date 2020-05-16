@@ -15,3 +15,9 @@ by default, meili-cli uses `localhost:7700`, you can change the address by speci
 ```bash
 meili-cli my-meili-instance.com index create movies
 ```
+
+### Supported operations
+
+- [x] create, delete, list indexes
+- [x] perform searches
+- [x] add, remove documents
