@@ -19,7 +19,7 @@ pub enum Documents {
     },
     Delete {
         #[structopt(short, long, conflicts_with("all"))]
-        many: Vec<usize>,
+        multiple: Vec<usize>,
         #[structopt(short, long)]
         all: bool,
         #[structopt(name = "index uid", required_unless("all"), required_unless("many"))]
@@ -34,11 +34,11 @@ impl Documents {
 
         match self {
             Add { replace, path, .. } => add_documents(addr, index, path, *replace).await,
-            Delete { all, docid, many } => {
+            Delete { all, docid, multiple } => {
                 if *all {
                     delete_all(addr, index).await
-                } else if !many.is_empty() {
-                    delete_many(addr, index, many).await
+                } else if !multiple.is_empty() {
+                    delete_many(addr, index, multiple).await
                 } else {
                     delete_one(addr, index, *docid).await
                 }
