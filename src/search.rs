@@ -4,24 +4,52 @@ use serde_json::Value;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Search {
-    #[structopt(name = "query")]
+    #[structopt(
+        name = "query",
+        help("query string")
+    )]
     q: String,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Number of documents to skip"),
+    )]
     offset: Option<usize>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Maximum number of documents returned"),
+    )]
     limit: Option<usize>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Attributes to display in the returned documents"),
+    )]
     attributes_to_retrieve: Option<Vec<String>>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Attributes whose values have to be cropped"),
+    )]
     attributes_to_crop: Option<Vec<String>>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Length used to crop field values"),
+    )]
     crop_length: Option<usize>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Attributes whose values will contain highlighted matching terms")
+    )]
     attributes_to_highlight: Option<Vec<String>>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Filter queries by an attribute value"),
+    )]
     filters: Option<String>,
-    #[structopt(long)]
+    #[structopt(
+        long,
+        help("Defines whether an object that contains information about the matches should be returned or not"),
+    )]
     matches: Option<bool>,
 }
 
