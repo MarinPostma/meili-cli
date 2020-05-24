@@ -5,6 +5,7 @@ use anyhow::Result;
 use crate::index::Index;
 use crate::search::Search;
 use crate::documents::Documents;
+use crate::settings::Settings;
 
 #[derive(StructOpt, Debug)]
 #[structopt(about = "Meilisearch command line interface")]
@@ -24,13 +25,19 @@ enum Query {
         index: String,
         #[structopt(subcommand)]
         documents: Documents,
+    },
+    Settings {
+        #[structopt(short, long)]
+        index: String,
+        #[structopt(subcommand)]
+        settings: Settings,
     }
 }
 
 #[derive(StructOpt, Debug)]
 pub struct Command {
-    #[structopt(name = "address", default_value = "http://localhost:7700")]
-    addr: String,
+    #[structopt(long, short, default_value = "http://localhost:7700")]
+    host: String,
     #[structopt(subcommand)]
     query: Query,
 }
@@ -40,9 +47,10 @@ impl Command {
         use Query::*;
 
         match self.query {
-            Search { ref search, ref index, .. } => search.exec(&self.addr, index).await,
-            Index { ref index } => index.exec(&self.addr).await,
-            Documents { ref documents, ref index } => documents.exec(&self.addr, index).await,
+            Search { ref search, ref index, .. } => search.exec(&self.host, index).await,
+            Index { ref index } => index.exec(&self.host).await,
+            Documents { ref documents, ref index } => documents.exec(&self.host, index).await,
+            Settings { ref index, ref settings, .. } => settings.exec(&self.host, index).await,
         }
     }
 }

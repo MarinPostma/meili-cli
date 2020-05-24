@@ -6,6 +6,7 @@ mod index;
 mod search;
 mod documents;
 mod command;
+mod settings;
 
 #[tokio::main]
 async fn main() {
