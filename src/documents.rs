@@ -24,7 +24,8 @@ pub enum Documents {
         all: bool,
         #[structopt(name = "index uid", required_unless("all"), required_unless("many"))]
         docid: usize,
-    }
+    },
+    List,
 }
 
 impl Documents {
@@ -32,18 +33,28 @@ impl Documents {
         use Documents::*;
 
         match self {
-            Add { replace, path, .. } => add_documents(&addr, index, path, *replace).await,
+            Add { replace, path, .. } => add_documents(addr, index, path, *replace).await,
             Delete { all, docid, many } => {
                 if *all {
-                    delete_all(&addr, index).await
+                    delete_all(addr, index).await
                 } else if !many.is_empty() {
-                    delete_many(&addr, index, &many).await
+                    delete_many(addr, index, many).await
                 } else {
-                    delete_one(&addr, index, *docid).await
+                    delete_one(addr, index, *docid).await
                 }
-            }
+            },
+            List => list_documents(addr, index).await,
         }
     }
+}
+
+async fn list_documents(addr: &str, index: &str) -> Result<Value> {
+    let url = format!("{}/indexes/{}/documents", addr, index);
+    let response = reqwest::get(&url)
+        .await?
+        .text()
+        .await?;
+    Ok(serde_json::from_str(&response)?)
 }
 
 async fn delete_many(_addr: &str, _index: &str, _docids: &[usize]) -> Result<Value> {
@@ -83,7 +94,7 @@ async fn add_documents(addr: &str, index: &str, path: &PathBuf, replace: bool) -
         client.put(&url)
     };
     let json_file = File::open(path)?;
-    let payload = serde_json::from_reader::<_, Value>(json_file)?; 
+    let payload: Value = serde_json::from_reader(json_file)?;
     let response = client.json(&payload)
         .send()
         .await?
