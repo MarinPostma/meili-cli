@@ -1,4 +1,4 @@
-use std::fs::read_to_string;
+use std::fs::File;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -82,7 +82,9 @@ async fn add_documents(addr: &str, index: &str, path: &PathBuf, replace: bool) -
     } else {
         client.put(&url)
     };
-    let response = client.json(&read_to_string(path)?)
+    let json_file = File::open(path)?;
+    let payload = serde_json::from_reader::<_, Value>(json_file)?; 
+    let response = client.json(&payload)
         .send()
         .await?
         .text()
