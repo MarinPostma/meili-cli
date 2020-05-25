@@ -6,6 +6,8 @@ use serde::Serialize;
 use serde_json::Value;
 use structopt::StructOpt;
 
+use crate::Context;
+
 #[derive(Debug, StructOpt, Serialize)]
 #[structopt(about = "create, delete, update and list documents")]
 pub enum Documents {
@@ -29,76 +31,55 @@ pub enum Documents {
 }
 
 impl Documents {
-    pub async fn exec(&self, addr: &str, index: &str) -> Result<Value> {
+    pub async fn exec(&self, context: &Context, index: &str) -> Result<Value> {
         use Documents::*;
 
         match self {
-            Add { replace, path, .. } => add_documents(addr, index, path, *replace).await,
+            Add { replace, path, .. } => add_documents(context, index, path, *replace).await,
             Delete { all, docid, multiple } => {
                 if *all {
-                    delete_all(addr, index).await
+                    delete_all(context, index).await
                 } else if !multiple.is_empty() {
-                    delete_many(addr, index, multiple).await
+                    delete_many(context, index, multiple).await
                 } else {
-                    delete_one(addr, index, *docid).await
+                    delete_one(context, index, *docid).await
                 }
             },
-            List => list_documents(addr, index).await,
+            List => list_documents(context, index).await,
         }
     }
 }
 
-async fn list_documents(addr: &str, index: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}/documents", addr, index);
-    let response = reqwest::get(&url)
-        .await?
-        .text()
-        .await?;
+async fn list_documents(context: &Context, index: &str) -> Result<Value> {
+    let slug = format!("indexes/{}/documents", index);
+    let response = context.get(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn delete_many(_addr: &str, _index: &str, _docids: &[usize]) -> Result<Value> {
+async fn delete_many(_context: &Context, _index: &str, _docids: &[usize]) -> Result<Value> {
     unimplemented!("deleting many documents is not yet available...")
 }
 
-async fn delete_one(addr: &str, index: &str, docid: usize) -> Result<Value> {
-   let url = format!("{}/indexes/{}/documents/{}", addr, index, docid);
-   let client = reqwest::Client::new();
-   let response = client
-       .delete(&url)
-       .send()
-       .await?
-       .text()
-       .await?;
+async fn delete_one(context: &Context, index: &str, docid: usize) -> Result<Value> {
+   let slug = format!("indexes/{}/documents/{}", index, docid);
+   let response = context.delete(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn delete_all(addr: &str, index: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}/documents", addr, index);
-    let client = reqwest::Client::new();
-    let response = client
-        .delete(&url)
-        .send()
-        .await?
-        .text()
-        .await?;
+async fn delete_all(context: &Context, index: &str) -> Result<Value> {
+    let slug = format!("indexes/{}/documents", index);
+    let response = context.delete(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn add_documents(addr: &str, index: &str, path: &PathBuf, replace: bool) -> Result<Value> {
-    let url = format!("{}/indexes/{}/documents", addr, index);
-    let client = reqwest::Client::new();
-    let client = if replace {
-        client.post(&url)
-    } else {
-        client.put(&url)
-    };
+async fn add_documents(context: &Context, index: &str, path: &PathBuf, replace: bool) -> Result<Value> {
+    let url = format!("indexes/{}/documents", index);
     let json_file = File::open(path)?;
     let payload: Value = serde_json::from_reader(json_file)?;
-    let response = client.json(&payload)
-        .send()
-        .await?
-        .text()
-        .await?;
+    let response = if replace {
+        context.post(&url, &payload).await?
+    } else {
+        context.put(&url, &payload).await?
+    };
     Ok(serde_json::from_str(&response)?)
 }

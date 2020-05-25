@@ -3,7 +3,9 @@ use serde::Serialize;
 use serde_json::Value;
 use anyhow::Result;
 
-// find a way to het symonyms
+use crate::Context;
+
+// find a way to get symonyms
 #[derive(Debug, StructOpt, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsUpdate {
@@ -52,16 +54,9 @@ pub struct SettingsUpdate {
 }
 
 impl SettingsUpdate {
-    async fn exec(&self, addr: &str, index: &str) -> Result<Value> {
-        let url = format!("{}/indexes/{}/settings", addr, index);
-        let client = reqwest::Client::new();
-        let response = client
-            .post(&url)
-            .json(&self)
-            .send()
-            .await?
-            .text()
-            .await?;
+    async fn exec(&self, context: &Context, index: &str) -> Result<Value> {
+        let slug = format!("indexes/{}/settings", index);
+        let response = context.post(&slug, self).await?;
         Ok(serde_json::from_str(&response)?)
     }
 }
@@ -87,34 +82,25 @@ pub enum Settings {
 }
 
 impl Settings {
-    pub async fn exec(&self, addr: &str, index: &str) -> Result<Value> {
+    pub async fn exec(&self, context: &Context, index: &str) -> Result<Value> {
         use Settings::*;
 
         match self {
-            Reset => reset(addr, index).await,
-            List => list(addr, index).await,
-            Update { settings, ..} => settings.exec(addr, index).await,
+            Reset => reset(context, index).await,
+            List => list(context, index).await,
+            Update { settings, ..} => settings.exec(context, index).await,
         }
     }
 }
 
-async fn list(addr: &str, index: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}/settings", addr, index);
-    let response = reqwest::get(&url)
-        .await?
-        .text()
-        .await?;
+async fn list(context: &Context, index: &str) -> Result<Value> {
+    let slug = format!("indexes/{}/settings", index);
+    let response = context.get(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn reset(addr: &str, index: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}/settings", addr, index);
-    let client = reqwest::Client::new();
-    let _response = client
-        .delete(&url)
-        .send()
-        .await?
-        .text()
-        .await?;
+async fn reset(context: &Context, index: &str) -> Result<Value> {
+    let slug = format!("indexes/{}/settings", index);
+    let _response = context.delete(&slug).await?;
     Ok(Value::String(String::from("ok")))
 }

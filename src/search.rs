@@ -3,6 +3,8 @@ use serde::Serialize;
 use serde_json::Value;
 use structopt::StructOpt;
 
+use crate::Context;
+
 #[derive(StructOpt, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Search {
@@ -54,13 +56,10 @@ pub struct Search {
 }
 
 impl Search {
-    pub async fn exec(&self, addr: &str, index: &str) -> Result<Value> {
+    pub async fn exec(&self, context: &Context, index: &str) -> Result<Value> {
         let url_params = serde_url_params::to_string(&self).unwrap();
-        let url = format!("{}/indexes/{}/search?{}", addr, index, url_params);
-        let response = reqwest::get(&url)
-            .await?
-            .text()
-            .await?;
+        let slug = format!("indexes/{}/search?{}", index, url_params);
+        let response = context.get(&slug).await?;
         Ok(serde_json::from_str(&response)?)
     }
 }

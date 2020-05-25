@@ -3,6 +3,8 @@ use serde::Serialize;
 use anyhow::Result;
 use serde_json::{Value, json};
 
+use crate::context::Context;
+
 #[derive(Debug, StructOpt, Serialize)]
 #[structopt(about = "create, delete, update and list indexes")]
 pub enum Index {
@@ -26,78 +28,52 @@ pub enum Index {
 }
 
 impl Index {
-    pub async fn exec(&self, addr: &str) -> Result<Value> {
+    pub async fn exec(&self, context: &Context) -> Result<Value> {
         use Index::*;
 
         match self {
-            List => list_indices(addr).await,
-            Create { index_uid, primary_key } => create_index(addr, index_uid, primary_key.as_deref()).await,
-            Delete { uid } => delete_index(&addr, uid).await,
+            List => list_indices(&context).await,
+            Create { index_uid, primary_key } => create_index(&context, index_uid, primary_key.as_deref()).await,
+            Delete { uid } => delete_index(&context, uid).await,
             Get { uid, all } => {
                 if *all {
-                    get_all_indices(&addr).await
+                    get_all_indices(&context).await
                 } else {
-                    get_index(&addr, &uid.as_deref().unwrap()).await
+                    get_index(&context, &uid.as_deref().unwrap()).await
                 }
             }
         }
     }
 }
 
-async fn list_indices(addr: &str) -> Result<Value> {
-    let url = format!("{}/indexes", addr);
-    let response = reqwest::get(&url)
-        .await?
-        .text()
-        .await?;
+async fn list_indices(context: &Context) -> Result<Value> {
+    let slug = format!("{}/indexes", &context.host);
+    let response = context.get(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn get_index(addr: &str, uid: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}", addr, uid);
-    let response = reqwest::get(&url)
-        .await?
-        .text()
-        .await?;
+async fn get_index(context: &Context, uid: &str) -> Result<Value> {
+    let slug = format!("indexes/{}", uid);
+    let response = context.get(&slug).await?;
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn get_all_indices(addr: &str) -> Result<Value> {
-    let url = format!("{}/indexes", addr);
-    let response = reqwest::get(&url)
-        .await?
-        .text()
-        .await?;
-    println!("{:?}", response);
-     Ok(serde_json::from_str(&response)?)
+async fn get_all_indices(context: &Context) -> Result<Value> {
+    let response = context.get("indexes").await?;
+    Ok(serde_json::from_str(&response)?)
 }
 
-async fn delete_index(addr: &str, uid: &str) -> Result<Value> {
-    let url = format!("{}/indexes/{}", addr, uid);
-    let client = reqwest::Client::new();
-    let _response = client
-        .delete(&url)
-        .send()
-        .await?
-        .text()
-        .await?;
+async fn delete_index(context: &Context, uid: &str) -> Result<Value> {
+    let slug = format!("indexes/{}", uid);
+    let _response = context.delete(&slug).await?;
     Ok(Value::String(String::from("ok")))
 }
 
-async fn create_index(addr: &str, uid: &str, primary_key: Option<&str>) -> Result<Value> {
-    let url = format!("{}/indexes", addr);
-    let body = json!({
+async fn create_index(context: &Context, uid: &str, primary_key: Option<&str>) -> Result<Value> {
+    let payload = json!({
         "uid": uid,
         "primaryKey": primary_key
     });
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(&url)
-        .json(&body)
-        .send()
-        .await?
-        .text()
-        .await?;
+    let response = context.post("/indexes", &payload).await?;
     Ok(serde_json::from_str(&response)?)
 }

@@ -2,11 +2,14 @@ use structopt::StructOpt;
 
 use command::Command;
 
+pub use context::Context;
+
 mod index;
 mod search;
 mod documents;
 mod command;
 mod settings;
+mod context;
 
 #[tokio::main]
 async fn main() {
