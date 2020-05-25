@@ -22,3 +22,4 @@ meili-cli my-meili-instance.com index create movies
 - [x] perform searches
 - [x] add, remove documents
 - [x] list, reset, modify settings
+- [x] support for API keys
