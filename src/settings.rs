@@ -62,7 +62,7 @@ impl SettingsUpdate {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(about = "create, delete, update and list indexes")]
+#[structopt(about = "update indexes settings")]
 pub enum Settings {
     #[structopt(
         about("Reset all settings for index"),

@@ -7,6 +7,7 @@ use crate::Context;
 
 #[derive(StructOpt, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[structopt(about = "perform search")]
 pub struct Search {
     #[structopt(
         name = "query",
