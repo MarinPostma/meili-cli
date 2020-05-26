@@ -54,6 +54,14 @@ pub struct Search {
         help("Defines whether an object that contains information about the matches should be returned or not"),
     )]
     matches: Option<bool>,
+    #[structopt(
+        long,
+    )]
+    facet_filters: Option<String>,
+    #[structopt(
+        long,
+    )]
+    facets_distribution: Option<String>,
 }
 
 impl Search {

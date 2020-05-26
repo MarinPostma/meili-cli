@@ -47,8 +47,8 @@ impl Index {
 }
 
 async fn list_indices(context: &Context) -> Result<Value> {
-    let slug = format!("{}/indexes", &context.host);
-    let response = context.get(&slug).await?;
+    let url = format!("{}/indexes", &context.host);
+    let response = context.get(&url) .await?;
     Ok(serde_json::from_str(&response)?)
 }
 
@@ -74,6 +74,6 @@ async fn create_index(context: &Context, uid: &str, primary_key: Option<&str>) -
         "uid": uid,
         "primaryKey": primary_key
     });
-    let response = context.post("/indexes", &payload).await?;
+    let response = context.post("/indexes", payload.to_string()).await?;
     Ok(serde_json::from_str(&response)?)
 }

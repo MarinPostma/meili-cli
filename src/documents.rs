@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -74,12 +74,11 @@ async fn delete_all(context: &Context, index: &str) -> Result<Value> {
 
 async fn add_documents(context: &Context, index: &str, path: &PathBuf, replace: bool) -> Result<Value> {
     let url = format!("indexes/{}/documents", index);
-    let json_file = File::open(path)?;
-    let payload: Value = serde_json::from_reader(json_file)?;
+    let payload = read_to_string(&path)?;
     let response = if replace {
-        context.post(&url, &payload).await?
+        context.post(&url, payload).await?
     } else {
-        context.put(&url, &payload).await?
+        context.put(&url, payload).await?
     };
     Ok(serde_json::from_str(&response)?)
 }

@@ -51,12 +51,19 @@ pub struct SettingsUpdate {
     )]
     #[serde(skip_serializing_if = "Option::is_none")]
     accept_new_fields: Option<bool>,
+    #[structopt(
+        long,
+        help("Attributes to set for faceting"),
+        value_names(&["attr"])
+    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    attributes_for_faceting: Option<Vec<String>>,
 }
 
 impl SettingsUpdate {
     async fn exec(&self, context: &Context, index: &str) -> Result<Value> {
         let slug = format!("indexes/{}/settings", index);
-        let response = context.post(&slug, self).await?;
+        let response = context.post(&slug, serde_json::to_string(self)?).await?;
         Ok(serde_json::from_str(&response)?)
     }
 }
