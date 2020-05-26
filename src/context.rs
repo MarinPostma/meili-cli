@@ -1,6 +1,6 @@
-use serde::Serialize;
-use structopt::StructOpt;
 use anyhow::Result;
+use reqwest::Body;
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct Context {
@@ -26,11 +26,12 @@ impl Context {
         Ok(response)
     }
 
-    pub async fn post<S: Serialize>(&self, slug: &str, payload: &S) -> Result<String> {
+    pub async fn post<T: Into<Body>>(&self, slug: &str, payload: T) -> Result<String> {
         let url = format!("{}/{}", self.host, slug);
         let mut client = reqwest::Client::new()
             .post(&url)
-            .json(payload);
+            .header("Content-Type", "application/json")
+            .body(payload);
         if let Some(ref key) = self.key {
             client = client.header("X-Meili-API-Key", key);
         }
@@ -42,11 +43,12 @@ impl Context {
         Ok(response)
     }
 
-    pub async fn put<S: Serialize>(&self, slug: &str, payload: &S) -> Result<String> {
+    pub async fn put<T: Into<Body>>(&self, slug: &str, payload: T) -> Result<String> {
         let url = format!("{}/{}", self.host, slug);
         let mut client = reqwest::Client::new()
             .put(&url)
-            .json(payload);
+            .header("Content-Type", "application/json")
+            .body(payload);
         if let Some(ref key) = self.key {
             client = client.header("X-Meili-API-Key", key);
         }
