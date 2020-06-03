@@ -2,6 +2,12 @@
 
 A CLI for Meilisearch
 
+## install
+
+```bash
+cargo install --path .
+```
+
 ## Usage
 
 get basic help:
