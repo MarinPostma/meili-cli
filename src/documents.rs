@@ -1,4 +1,5 @@
 use std::fs::read_to_string;
+use std::io::prelude::*;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -17,7 +18,7 @@ pub enum Documents {
         #[structopt(short, long, required_unless("replace"))]
         update: bool,
         #[structopt(name = "path", parse(from_os_str))]
-        path: PathBuf,
+        path: Option<PathBuf>,
     },
     Delete {
         #[structopt(short, long, conflicts_with("all"))]
@@ -35,7 +36,7 @@ impl Documents {
         use Documents::*;
 
         match self {
-            Add { replace, path, .. } => add_documents(context, index, path, *replace).await,
+            Add { replace, path, .. } => add_documents(context, index, path.as_ref(), *replace).await,
             Delete { all, docid, multiple } => {
                 if *all {
                     delete_all(context, index).await
@@ -72,9 +73,17 @@ async fn delete_all(context: &Context, index: &str) -> Result<Value> {
     Ok(serde_json::from_str(&response)?)
 }
 
-async fn add_documents(context: &Context, index: &str, path: &PathBuf, replace: bool) -> Result<Value> {
+async fn add_documents(context: &Context, index: &str, path: Option<&PathBuf>, replace: bool) -> Result<Value> {
     let url = format!("indexes/{}/documents", index);
-    let payload = read_to_string(&path)?;
+    let payload = match path {
+        Some(path) => read_to_string(&path)?,
+        None => {
+            let mut stdin = std::io::stdin();
+            let mut s = String::new();
+            stdin.read_to_string(&mut s)?;
+            s
+        }
+    };
     let response = if replace {
         context.post(&url, payload).await?
     } else {
