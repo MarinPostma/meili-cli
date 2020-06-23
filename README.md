@@ -38,7 +38,8 @@ or
 
 ```bash
 meili-cli documents -i index_name add --update documents.json
-'''
+```
+
 ### Supported operations
 
 - [x] create, delete, list indexes
