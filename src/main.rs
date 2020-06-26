@@ -10,6 +10,7 @@ mod documents;
 mod command;
 mod settings;
 mod context;
+mod update;
 
 #[tokio::main]
 async fn main() {

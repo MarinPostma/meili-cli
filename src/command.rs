@@ -2,11 +2,12 @@ use structopt::StructOpt;
 use serde_json::Value;
 use anyhow::Result;
 
+use crate::Context;
+use crate::documents::Documents;
 use crate::index::Index;
 use crate::search::Search;
-use crate::documents::Documents;
 use crate::settings::Settings;
-use crate::Context;
+use crate::update::Update;
 
 #[derive(StructOpt, Debug)]
 #[structopt(about = "Meilisearch command line interface")]
@@ -32,6 +33,12 @@ enum Query {
         index: String,
         #[structopt(subcommand)]
         settings: Settings,
+    },
+    Update {
+        #[structopt(short, long)]
+        index: String,
+        #[structopt(flatten)]
+        update: Update,
     }
 }
 
@@ -52,6 +59,7 @@ impl Command {
             Index { ref index } => index.exec(&self.context).await,
             Documents { ref documents, ref index } => documents.exec(&self.context, index).await,
             Settings { ref index, ref settings, .. } => settings.exec(&self.context, index).await,
+            Update { ref index, ref update, .. } => update.exec(&self.context, index).await,
         }
     }
 }
