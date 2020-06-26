@@ -13,10 +13,8 @@ use crate::Context;
 #[structopt(about = "create, delete, update and list documents")]
 pub enum Documents {
     Add {
-        #[structopt(short, long, conflicts_with("update"))]
+        #[structopt(short, long)]
         replace: bool,
-        #[structopt(short, long, required_unless("replace"))]
-        update: bool,
         #[structopt(name = "path", parse(from_os_str))]
         path: Option<PathBuf>,
     },
